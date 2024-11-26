@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>iRootsCloud - Coming Soon</title>
+  <style>
+    /* Basic styling */
+    * {
+      box-sizing: border-box;
+    }
+    body, html {
+      font-family: Arial, sans-serif;
+      background: #333;
+      color: #fff;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+      overflow: hidden; /* Prevent scrolling */
+    }
+
+    .container {
+      text-align: center;
+      width: 100%;
+      max-width: 90%;
+      margin: 20px;
+    }
+
+    h1 {
+      font-size: 1.5em;
+      margin: 0.5em 0;
+    }
+
+    p {
+      margin: 0.5em 0;
+    }
+
+    /* Canvas styling */
+    #gameCanvas {
+      background-color: #000;
+      border: 2px solid #fff;
+      border-radius: 5px;
+      width: 90vw;
+      height: 60vh;
+      max-width: 400px;
+      max-height: 600px;
+      transition: border-color 0.5s ease;
+    }
+
+    /* Score and support text */
+    .score, .support {
+      font-size: 1em;
+      margin: 10px 0;
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 600px) {
+      h1 {
+        font-size: 1.2em;
+      }
+      p, .score, .support {
+        font-size: 0.9em;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>We're Revamping Our Website</h1>
+    <p>Exciting updates are on the way! While you wait, enjoy our fun game below!</p>
+    <canvas id="gameCanvas"></canvas>
+    <p class="score">Score: <span id="score">0</span></p>
+    <div class="support">
+      For inquiries, reach out at <a href="mailto:support@irootscloud.com" style="color: #00ccff;">support@irootscloud.com</a>
+    </div>
+  </div>
+
+  <script>
+    const canvas = document.getElementById("gameCanvas");
+    const ctx = canvas.getContext("2d");
+    let score = 0;
+
+    // Responsive canvas dimensions
+    function resizeCanvas() {
+      canvas.width = canvas.clientWidth;
+      canvas.height = canvas.clientHeight;
+    }
+    window.addEventListener("resize", resizeCanvas);
+    resizeCanvas();
+
+    // Basket properties
+    const basket = {
+      width: canvas.width * 0.2,
+      height: 20,
+      x: canvas.width / 2 - (canvas.width * 0.2) / 2,
+      y: canvas.height - 30,
+      speed: 7
+    };
+
+    // Falling stars properties
+    const stars = [];
+    const starRadius = 10;
+    const starSpeed = 2;
+
+    // Touch controls
+    let touchX = null;
+    canvas.addEventListener("touchstart", handleTouchStart);
+    canvas.addEventListener("touchmove", handleTouchMove);
+    document.addEventListener("keydown", moveBasket);
+
+    function handleTouchStart(event) {
+      touchX = event.touches[0].clientX;
+    }
+
+    function handleTouchMove(event) {
+      const currentTouchX = event.touches[0].clientX;
+      const dx = currentTouchX - touchX;
+      touchX = currentTouchX;
+
+      if (dx < 0 && basket.x > 0) {
+        basket.x = Math.max(0, basket.x + dx);
+      } else if (dx > 0 && basket.x + basket.width < canvas.width) {
+        basket.x = Math.min(canvas.width - basket.width, basket.x + dx);
+      }
+    }
+
+    function moveBasket(event) {
+      if (event.key === "ArrowLeft" && basket.x > 0) {
+        basket.x -= basket.speed;
+      } else if (event.key === "ArrowRight" && basket.x + basket.width < canvas.width) {
+        basket.x += basket.speed;
+      }
+    }
+
+    function createStar() {
+      const x = Math.random() * (canvas.width - starRadius * 2) + starRadius;
+      stars.push({ x, y: 0 });
+    }
+
+    function updateStars() {
+      stars.forEach((star, index) => {
+        star.y += starSpeed;
+
+        if (
+          star.y + starRadius >= basket.y &&
+          star.x > basket.x &&
+          star.x < basket.x + basket.width
+        ) {
+          stars.splice(index, 1);
+          score++;
+          document.getElementById("score").innerText = score;
+
+          // Apply glow effect every 10 points with random color
+          if (score % 10 === 0) {
+            const randomColor = `#${Math.floor(Math.random()*16777215).toString(16)}`;
+            canvas.style.borderColor = randomColor;
+            canvas.style.boxShadow = `0 0 15px 5px ${randomColor}`;
+            setTimeout(() => {
+              canvas.style.boxShadow = 'none';
+            }, 500);
+          }
+        }
+
+        if (star.y > canvas.height) {
+          stars.splice(index, 1);
+        }
+      });
+    }
+
+    function drawBasket() {
+      ctx.fillStyle = "#00ccff";
+      ctx.fillRect(basket.x, basket.y, basket.width, basket.height);
+    }
+
+    function drawStars() {
+      ctx.fillStyle = "#ffd700";
+      stars.forEach(star => {
+        ctx.beginPath();
+        ctx.arc(star.x, star.y, starRadius, 0, Math.PI * 2);
+        ctx.fill();
+      });
+    }
+
+    function gameLoop() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      drawBasket();
+      drawStars();
+      updateStars();
+
+      if (Math.random() < 0.02) createStar();
+
+      requestAnimationFrame(gameLoop);
+    }
+
+    gameLoop();
+  </script>
+</body>
+</html>
